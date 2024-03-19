@@ -1,5 +1,4 @@
 """ from https://github.com/keithito/tacotron """
-
 """
 Cleaners are transformations that run over the input text at both training and eval time.
 
@@ -12,7 +11,6 @@ hyperparameter. Some cleaners are English-specific. You'll typically want to use
      the symbols in symbols.py to match your data).
 """
 
-
 # Regular expression matching whitespace:
 import re
 from unidecode import unidecode
@@ -20,32 +18,34 @@ from .numbers import normalize_numbers
 from g2p import make_g2p
 from .symbols import MAPPINGS
 
+str_g2p = make_g2p("str", "str-ipa")
+moh_g2p = make_g2p("moh", "moh-ipa")
+crk_g2p = make_g2p("crk", "crk-ipa")
+
 _whitespace_re = re.compile(r"\s+")
 
 # List of (regular expression, replacement) pairs for abbreviations:
-_abbreviations = [
-    (re.compile("\\b%s\\." % x[0], re.IGNORECASE), x[1])
-    for x in [
-        ("mrs", "misess"),
-        ("mr", "mister"),
-        ("dr", "doctor"),
-        ("st", "saint"),
-        ("co", "company"),
-        ("jr", "junior"),
-        ("maj", "major"),
-        ("gen", "general"),
-        ("drs", "doctors"),
-        ("rev", "reverend"),
-        ("lt", "lieutenant"),
-        ("hon", "honorable"),
-        ("sgt", "sergeant"),
-        ("capt", "captain"),
-        ("esq", "esquire"),
-        ("ltd", "limited"),
-        ("col", "colonel"),
-        ("ft", "fort"),
-    ]
-]
+_abbreviations = [(re.compile("\\b%s\\." % x[0], re.IGNORECASE), x[1])
+                  for x in [
+                      ("mrs", "misess"),
+                      ("mr", "mister"),
+                      ("dr", "doctor"),
+                      ("st", "saint"),
+                      ("co", "company"),
+                      ("jr", "junior"),
+                      ("maj", "major"),
+                      ("gen", "general"),
+                      ("drs", "doctors"),
+                      ("rev", "reverend"),
+                      ("lt", "lieutenant"),
+                      ("hon", "honorable"),
+                      ("sgt", "sergeant"),
+                      ("capt", "captain"),
+                      ("esq", "esquire"),
+                      ("ltd", "limited"),
+                      ("col", "colonel"),
+                      ("ft", "fort"),
+                  ]]
 
 
 def expand_abbreviations(text):
@@ -95,9 +95,31 @@ def english_cleaners(text):
     return text
 
 
+def str_cleaners(text):
+    """Pipeline for SENĆOŦEN text, including number and abbreviation expansion."""
+    text = collapse_whitespace(text)
+    text = str_g2p(text).output_string
+    return text
+
+
+def moh_cleaners(text):
+    """Pipeline for SENĆOŦEN text, including number and abbreviation expansion."""
+    text = collapse_whitespace(text)
+    text = moh_g2p(text).output_string
+    return text
+
+
+def crk_cleaners(text):
+    """Pipeline for SENĆOŦEN text, including number and abbreviation expansion."""
+    text = collapse_whitespace(text)
+    text = crk_g2p(text).output_string
+    return text
+
+
 CLEANERS = {}
 for k, v in MAPPINGS.items():
-    CLEANERS[k] = lambda x, v=v: v["ipa"](collapse_whitespace(x.lower())).output_string
+    CLEANERS[k] = lambda x, v=v: v["ipa"](collapse_whitespace(x.lower())
+                                          ).output_string
 
 CLEANERS["eng"] = english_cleaners
 CLEANERS["zh"] = transliteration_cleaners
